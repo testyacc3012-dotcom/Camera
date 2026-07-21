@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Motion Detector</title>
+<style>
+  :root{
+    --green: #3ddc84;
+    --blue: #3d9bff;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html, body{
+    width:100%; height:100%;
+    overflow:hidden;
+    background:#000;
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  #video{
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    object-fit:cover;
+    z-index:0;
+  }
+
+  #sampleCanvas{ display:none; }
+
+  #detectBox{
+    position:fixed;
+    top:50%; left:50%;
+    width:35vmin; height:35vmin;
+    max-width:220px; max-height:220px;
+    transform:translate(-50%,-50%);
+    border:3px solid var(--green);
+    background:rgba(61,220,132,0.15);
+    border-radius:10px;
+    z-index:2;
+    transition:border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    box-shadow:0 0 18px 2px rgba(61,220,132,0.35);
+    pointer-events:none;
+  }
+  #detectBox.motion{
+    border-color:var(--blue);
+    background:rgba(61,155,255,0.2);
+    box-shadow:0 0 26px 6px rgba(61,155,255,0.55);
+  }
+
+  #statusBar{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    z-index:3;
+    padding:1rem 1.2rem calc(1rem + env(safe-area-inset-bottom));
+    background:linear-gradient(0deg, rgba(0,0,0,0.75), transparent);
+    color:#fff;
+    text-align:center;
+    font-size:0.9rem;
+    letter-spacing:0.02em;
+  }
+  #statusBar .dot{
+    display:inline-block;
+    width:9px; height:9px;
+    border-radius:50%;
+    background:var(--green);
+    margin-right:0.5rem;
+    vertical-align:middle;
+    transition:background 0.15s ease;
+  }
+  #statusBar.motion .dot{ background:var(--blue); }
+
+  #permissionScreen{
+    position:fixed;
+    inset:0;
+    z-index:10;
+    background:#0b0b0d;
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:2rem;
+  }
+  #permissionScreen h1{ font-size:1.3rem; margin-bottom:0.6rem; }
+  #permissionScreen p{ color:#aaa; font-size:0.9rem; max-width:320px; margin-bottom:1.6rem; line-height:1.5; }
+  #permissionScreen button{
+    background:var(--green);
+    color:#06120a;
+    border:none;
+    padding:0.85rem 1.8rem;
+    border-radius:100px;
+    font-size:1rem;
+    font-weight:600;
+    cursor:pointer;
+  }
+  #permissionScreen .error{ color:#ff6b6b; font-size:0.85rem; margin-top:1rem; max-width:300px; }
+  #permissionScreen.hidden{ display:none; }
+</style>
+</head>
+<body>
+
+<video id="video" autoplay playsinline muted></video>
+<canvas id="sampleCanvas"></canvas>
+
+<div id="detectBox"></div>
+
+<div id="statusBar"><span class="dot"></span><span id="statusText">Starting camera…</span></div>
+
+<div id="permissionScreen">
+  <h1>Camera access needed</h1>
+  <p>This uses your phone's back camera to watch the green box for movement. Nothing is recorded or sent anywhere — it all stays on your device.</p>
+  <button id="startBtn">Enable camera</button>
+  <div class="error" id="errorMsg"></div>
+</div>
+
+<script>
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('sampleCanvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const detectBox = document.getElementById('detectBox');
+  const statusBar = document.getElementById('statusBar');
+  const statusText = document.getElementById('statusText');
+  const permissionScreen = document.getElementById('permissionScreen');
+  const startBtn = document.getElementById('startBtn');
+  const errorMsg = document.getElementById('errorMsg');
+
+  // Tunables
+  const SAMPLE_SIZE = 64;
+  // Detection tuning
+  const PIXEL_DIFF_THRESHOLD = 28;      // per-pixel brightness delta that counts as "changed"
+  const RING_MARGIN_FACTOR = 0.6;       // how much wider the reference ring is than the box (60% bigger per side)
+  const ABS_MIN_RATIO = 0.02;           // inside must change at least this much, regardless of the ring
+  const NET_RATIO_THRESHOLD = 0.05;     // inside change must exceed ring change by this much to count as real motion
+  const CONFIRM_FRAMES = 2;             // require this many consecutive suspicious frames before flagging motion
+  const MOTION_HOLD_MS = 350;           // keep "motion" on briefly after the last confirmed frame, avoids flicker
+
+  let prevInner = null;
+  let prevOuter = null;
+  let lastMotionAt = 0;
+  let consecutiveHits = 0;
+  let stream = null;
+  const outerCanvas = document.createElement('canvas');
+  const outerCtx = outerCanvas.getContext('2d', { willReadFrequently: true });
+
+  async function startCamera(){
+    errorMsg.textContent = '';
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { exact: 'environment' } },
+        audio: false
+      });
+    } catch(e1){
+      try{
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+          audio: false
+        });
+      } catch(e2){
+        errorMsg.textContent = 'Could not access the back camera: ' + (e2.message || e2.name || 'unknown error') + '. Make sure you\'re on HTTPS and have granted camera permission.';
+        return;
+      }
+    }
+
+    video.srcObject = stream;
+    await video.play();
+
+    canvas.width = SAMPLE_SIZE;
+    canvas.height = SAMPLE_SIZE;
+    outerCanvas.width = SAMPLE_SIZE;
+    outerCanvas.height = SAMPLE_SIZE;
+
+    permissionScreen.classList.add('hidden');
+    statusText.textContent = 'Watching for movement';
+    requestAnimationFrame(analyzeLoop);
+  }
+
+  function getSampleRects(){
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const sw = window.innerWidth, sh = window.innerHeight;
+    if(!vw || !vh) return null;
+
+    const videoAspect = vw/vh, screenAspect = sw/sh;
+    let drawW, drawH, offsetX, offsetY;
+    if(videoAspect > screenAspect){
+      drawH = sh;
+      drawW = sh*videoAspect;
+      offsetX = (sw-drawW)/2;
+      offsetY = 0;
+    } else {
+      drawW = sw;
+      drawH = sw/videoAspect;
+      offsetX = 0;
+      offsetY = (sh-drawH)/2;
+    }
+
+    const boxRect = detectBox.getBoundingClientRect();
+    const scale = vw/drawW;
+
+    const inner = {
+      sx: (boxRect.left-offsetX)*scale,
+      sy: (boxRect.top-offsetY)*scale,
+      sW: boxRect.width*scale,
+      sH: boxRect.height*scale
+    };
+
+    // Outer rect: same center, expanded by RING_MARGIN_FACTOR on each side.
+    const outW = boxRect.width * (1 + RING_MARGIN_FACTOR*2);
+    const outH = boxRect.height * (1 + RING_MARGIN_FACTOR*2);
+    const outLeft = boxRect.left - boxRect.width*RING_MARGIN_FACTOR;
+    const outTop = boxRect.top - boxRect.height*RING_MARGIN_FACTOR;
+    const outer = {
+      sx: (outLeft-offsetX)*scale,
+      sy: (outTop-offsetY)*scale,
+      sW: outW*scale,
+      sH: outH*scale
+    };
+
+    // Fraction of the outer sample (in 0..1) that the inner box occupies —
+    // used to mask the inner region out when scoring the ring on its own.
+    const innerFracX0 = RING_MARGIN_FACTOR/(1+RING_MARGIN_FACTOR*2);
+    const innerFracX1 = (RING_MARGIN_FACTOR+1)/(1+RING_MARGIN_FACTOR*2);
+
+    return { inner, outer, innerFracX0, innerFracX1 };
+  }
+
+  function changeRatio(data, prev, size, maskFn){
+    if(!prev) return 0;
+    let changed = 0, counted = 0;
+    for(let y=0; y<size; y++){
+      for(let x=0; x<size; x++){
+        if(maskFn && maskFn(x, y, size)) continue;
+        const i = (y*size+x)*4;
+        const dr = Math.abs(data[i]   - prev[i]);
+        const dg = Math.abs(data[i+1] - prev[i+1]);
+        const db = Math.abs(data[i+2] - prev[i+2]);
+        const diff = (dr+dg+db)/3;
+        if(diff > PIXEL_DIFF_THRESHOLD) changed++;
+        counted++;
+      }
+    }
+    return counted>0 ? changed/counted : 0;
+  }
+
+  function analyzeLoop(){
+    const rects = getSampleRects();
+    if(rects && rects.inner.sW > 0 && rects.inner.sH > 0 && rects.outer.sW > 0){
+      // Inner (the box itself)
+      ctx.drawImage(video, rects.inner.sx, rects.inner.sy, rects.inner.sW, rects.inner.sH, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
+      const innerFrame = ctx.getImageData(0, 0, SAMPLE_SIZE, SAMPLE_SIZE).data;
+
+      // Outer (box + surrounding margin) — used as the "what is the camera/scene doing generally" reference
+      outerCtx.drawImage(video, rects.outer.sx, rects.outer.sy, rects.outer.sW, rects.outer.sH, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
+      const outerFrame = outerCtx.getImageData(0, 0, SAMPLE_SIZE, SAMPLE_SIZE).data;
+
+      const { innerFracX0, innerFracX1 } = rects;
+      // Only count pixels in the outer sample that fall OUTSIDE where the inner box sits —
+      // this gives us a pure "surroundings only" ring, not diluted by the box's own content.
+      const ringMask = (x, y, size) => {
+        const fx = x/size, fy = y/size;
+        return fx > innerFracX0 && fx < innerFracX1 && fy > innerFracX0 && fy < innerFracX1;
+      };
+
+      const innerRatio = changeRatio(innerFrame, prevInner, SAMPLE_SIZE, null);
+      const ringRatio = changeRatio(outerFrame, prevOuter, SAMPLE_SIZE, ringMask);
+
+      // Global motion (camera shake, whole scene shift, lighting change) moves the
+      // ring roughly as much as the inside. Real motion inside the box does not —
+      // it raises the inner ratio well above what the surrounding ring is doing.
+      const netRatio = innerRatio - ringRatio;
+      const suspicious = innerRatio > ABS_MIN_RATIO && netRatio > NET_RATIO_THRESHOLD;
+
+      if(suspicious){
+        consecutiveHits++;
+      } else {
+        consecutiveHits = 0;
+      }
+      if(consecutiveHits >= CONFIRM_FRAMES){
+        lastMotionAt = performance.now();
+      }
+
+      prevInner = innerFrame;
+      prevOuter = outerFrame;
+    }
+
+    const isMotion = (performance.now()-lastMotionAt) < MOTION_HOLD_MS;
+    detectBox.classList.toggle('motion', isMotion);
+    statusBar.classList.toggle('motion', isMotion);
+    statusText.textContent = isMotion ? 'Movement detected' : 'Watching for movement';
+
+    requestAnimationFrame(analyzeLoop);
+  }
+
+  startBtn.addEventListener('click', startCamera);
+
+  window.addEventListener('resize', ()=>{ prevFrame = null; });
+</script>
+
+</body>
+</html>
