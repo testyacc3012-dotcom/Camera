@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Derelict — Ownerless Roblox Group Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="scanlines" aria-hidden="true"></div>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="radar" aria-hidden="true">
+      <div class="radar-ring r1"></div>
+      <div class="radar-ring r2"></div>
+      <div class="radar-ring r3"></div>
+      <div class="radar-sweep"></div>
+      <div class="radar-blip b1"></div>
+      <div class="radar-blip b2"></div>
+      <div class="radar-blip b3"></div>
+    </div>
+    <p class="eyebrow">unclaimed group scanner</p>
+    <h1>DERELICT</h1>
+    <p class="tagline">Roblox groups with a dead owner still sit on the platform, fully intact, waiting for someone to claim them. Derelict scans public group data to find the ones with nobody home.</p>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-num" id="statScanned">0</span>
+        <span class="stat-label">groups checked</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" id="statFound">0</span>
+        <span class="stat-label">ownerless found</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" id="statStatus">idle</span>
+        <span class="stat-label">scanner status</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="panel" id="panel-scan">
+    <div class="panel-head">
+      <span class="panel-index">01</span>
+      <h2>Continuous scan</h2>
+      <p>Runs indefinitely — pages through every result for your keyword(s), verifies each one against its detail page, then loops back and does it again. Keep it running in the background; stop it whenever you want.</p>
+    </div>
+
+    <div class="control-row">
+      <input type="text" id="keywordInput" placeholder="e.g. trade, clan, army, shop, art" autocomplete="off">
+      <button id="btnScan" class="btn-primary">Start scan</button>
+      <button id="btnStop" class="btn-ghost" disabled>Stop</button>
+    </div>
+    <p class="hint">Tip: short, common words surface more groups. Separate multiple keywords with commas to queue them.</p>
+
+    <div class="progress-wrap" id="progressWrap" style="display:none;">
+      <div class="progress-meta">
+        <span id="progressLabel">page 1</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="log" id="scanLog">
+      <div class="log-empty">No scan running. Enter a keyword above and hit start.</div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-results">
+    <div class="panel-head">
+      <span class="panel-index">02</span>
+      <h2>Claimable groups</h2>
+      <p>Groups flagged with no owner. Verify each one on Roblox directly before attempting to claim — eligibility rules (Robux cost, group state) are set by Roblox and can change.</p>
+    </div>
+    <div class="results-table" id="resultsTable">
+      <div class="results-empty">Nothing found yet — results will appear here as the sweep runs.</div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-manual">
+    <div class="panel-head">
+      <span class="panel-index">03</span>
+      <h2>Check a specific group</h2>
+      <p>Already have a group ID in mind? Look it up directly instead of sweeping.</p>
+    </div>
+    <div class="control-row">
+      <input type="text" id="groupIdInput" placeholder="Group ID, e.g. 3120787" inputmode="numeric">
+      <button id="btnCheck" class="btn-primary">Check group</button>
+    </div>
+    <div class="manual-result" id="manualResult"></div>
+  </section>
+
+  <section class="panel" id="panel-proxy">
+    <div class="panel-head">
+      <span class="panel-index">04</span>
+      <h2>Connection settings</h2>
+      <p>Roblox's API is usually locked to requests from roblox.com itself. If sweeps fail with a network error, paste a CORS proxy URL prefix below (see the README for options) and Derelict will route requests through it.</p>
+    </div>
+    <div class="control-row">
+      <input type="text" id="proxyInput" placeholder="optional — e.g. https://corsproxy.io/?url=">
+      <button id="btnSaveProxy" class="btn-ghost">Save</button>
+    </div>
+    <p class="hint" id="proxyStatus">No proxy set — requesting Roblox directly.</p>
+  </section>
+
+</main>
+
+<footer>
+  <p>Derelict reads public Roblox group data only. It doesn't bypass logins, forge requests, or touch anything you don't already have legitimate access to. Claiming a group still happens on roblox.com, under Roblox's own rules.</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
