@@ -110,7 +110,7 @@ function addResultRow(group) {
       <span class="result-id">ID ${group.id}</span>
     </div>
     <span class="result-members">${group.memberCount ?? '?'} members</span>
-    <span class="badge">no owner</span>
+    <span class="badge">claimable</span>
     <a class="result-link" href="https://www.roblox.com/groups/${group.id}" target="_blank" rel="noopener">View on Roblox ↗</a>
   `;
   els.results.appendChild(row);
@@ -120,6 +120,15 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, c => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   }[c]));
+}
+
+// A group can come back with owner: null for two very different reasons:
+// genuinely up for grabs, or permanently shut down by Roblox (old system/
+// test groups, moderation closures). Locked groups report isLocked: true
+// and their page shows "Community Closed" - those aren't real claims, so
+// they're excluded here rather than surfaced as finds.
+function isGenuinelyClaimable(detail) {
+  return detail.owner === null && detail.isLocked !== true;
 }
 
 // ---------- Core search ----------
@@ -199,14 +208,13 @@ async function runContinuousScan(keywords) {
             continue;
           }
 
-          if (detail.owner === null && !state.foundIds.has(g.id)) {
+          if (isGenuinelyClaimable(detail) && !state.foundIds.has(g.id)) {
             state.foundIds.add(g.id);
             addResultRow(detail);
             updateStats();
-            logLine(`⚠ OWNERLESS: "${escapeHtml(detail.name)}" — #${g.id} — ${detail.memberCount} members`, true);
-            // Pause the scan and surface it immediately rather than letting
-            // it scroll past in the log.
-            alert(`Ownerless group found!\n\n${detail.name}\nID: ${g.id}\nMembers: ${detail.memberCount}\n\nScan will resume once you close this.`);
+            logLine(`⚠ CLAIMABLE: "${escapeHtml(detail.name)}" — #${g.id} — ${detail.memberCount} members`, true);
+          } else if (detail.owner === null && detail.isLocked === true) {
+            logLine(`#${g.id} "${escapeHtml(detail.name)}" — no owner but community closed, skipping`);
           }
 
           updateStats();
@@ -293,12 +301,13 @@ async function runIdScan(startId) {
 
       logLine(`checking <span class="tag">#${id}</span> "${escapeHtml(detail.name || '(unnamed)')}"…`);
 
-      if (detail.owner === null && !state.foundIds.has(id)) {
+      if (isGenuinelyClaimable(detail) && !state.foundIds.has(id)) {
         state.foundIds.add(id);
         addResultRow(detail);
         updateStats();
-        logLine(`⚠ OWNERLESS: "${escapeHtml(detail.name)}" — #${id} — ${detail.memberCount} members`, true);
-        alert(`Ownerless group found!\n\n${detail.name}\nID: ${id}\nMembers: ${detail.memberCount}\n\nScan will resume once you close this.`);
+        logLine(`⚠ CLAIMABLE: "${escapeHtml(detail.name)}" — #${id} — ${detail.memberCount} members`, true);
+      } else if (detail.owner === null && detail.isLocked === true) {
+        logLine(`#${id} "${escapeHtml(detail.name)}" — no owner but community closed, skipping`);
       }
 
       updateStats();
@@ -332,10 +341,12 @@ els.btnCheck.addEventListener('click', async () => {
     const res = await fetch(buildUrl(url));
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const g = await res.json();
-    const ownerless = g.owner === null;
+    const ownerless = isGenuinelyClaimable(g);
     els.manualResult.innerHTML = ownerless
-      ? `<span class="ok">✓ "${escapeHtml(g.name)}" (${g.memberCount} members) has no owner.</span> <a class="result-link" href="https://www.roblox.com/groups/${id}" target="_blank" rel="noopener">View ↗</a>`
-      : `<span class="no">✗ "${escapeHtml(g.name)}" is owned by ${escapeHtml(g.owner.username)}.</span>`;
+      ? `<span class="ok">✓ "${escapeHtml(g.name)}" (${g.memberCount} members) has no owner and is claimable.</span> <a class="result-link" href="https://www.roblox.com/groups/${id}" target="_blank" rel="noopener">View ↗</a>`
+      : g.owner === null
+        ? `<span class="no">✗ "${escapeHtml(g.name)}" has no owner, but the community is closed — not claimable.</span>`
+        : `<span class="no">✗ "${escapeHtml(g.name)}" is owned by ${escapeHtml(g.owner.username)}.</span>`;
   } catch (err) {
     els.manualResult.innerHTML = `<span class="warn">Request failed (${escapeHtml(err.message)}). Try setting a CORS proxy below.</span>`;
   }
