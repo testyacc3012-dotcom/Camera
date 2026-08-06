@@ -3,136 +3,176 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Derelict — Ownerless Roblox Group Scanner</title>
+<title>MRF — Medwood Research Facility | Clearance Portal</title>
+<meta name="description" content="Official clearance portal for Medwood Research Facility. Purchase personnel clearance levels.">
+<link rel="icon" href="assets/Screenshot_2026-06-11_193410.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<div class="scanlines" aria-hidden="true"></div>
+<div class="grain"></div>
 
-<header class="hero">
-  <div class="hero-inner">
-    <div class="radar" aria-hidden="true">
-      <div class="radar-ring r1"></div>
-      <div class="radar-ring r2"></div>
-      <div class="radar-ring r3"></div>
-      <div class="radar-sweep"></div>
-      <div class="radar-blip b1"></div>
-      <div class="radar-blip b2"></div>
-      <div class="radar-blip b3"></div>
-    </div>
-    <p class="eyebrow">unclaimed group scanner</p>
-    <h1>DERELICT</h1>
-    <p class="tagline">Roblox groups with a dead owner still sit on the platform, fully intact, waiting for someone to claim them. Derelict scans public group data to find the ones with nobody home.</p>
-    <div class="hero-stats">
-      <div class="stat">
-        <span class="stat-num" id="statScanned">0</span>
-        <span class="stat-label">groups checked</span>
-      </div>
-      <div class="stat">
-        <span class="stat-num" id="statFound">0</span>
-        <span class="stat-label">ownerless found</span>
-      </div>
-      <div class="stat">
-        <span class="stat-num" id="statStatus">idle</span>
-        <span class="stat-label">scanner status</span>
-      </div>
-    </div>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a href="#top" class="brand">
+      <img src="assets/Screenshot_2026-06-11_193410.png" alt="Medwood Research Facility seal" class="brand-mark">
+      <span class="brand-text">
+        <span class="brand-code">MRF</span>
+        <span class="brand-sub">MEDWOOD RESEARCH FACILITY</span>
+      </span>
+    </a>
+    <nav class="site-nav">
+      <a href="#levels">Clearance Levels</a>
+      <a href="#faq">FAQ</a>
+      <a href="#levels" class="nav-cta">Get Clearance</a>
+    </nav>
   </div>
 </header>
 
-<main>
+<main id="top">
 
-  <section class="panel" id="panel-scan">
-    <div class="panel-head">
-      <span class="panel-index">01</span>
-      <h2>Continuous scan</h2>
-      <p>Runs indefinitely until you stop it. Two modes: search by keyword, or walk every group ID directly — the second one doesn't care what a group is named, it just checks all of them.</p>
+  <section class="hero">
+    <div class="wrap hero-inner">
+      <p class="eyebrow eyebrow-hero">Personnel Clearance Portal</p>
+      <h1 class="hero-title">CHOOSE YOUR<br>CLEARANCE&nbsp;LEVEL</h1>
+      <p class="hero-copy">
+        MRF has three clearance levels: Standard, Advanced, and Ultimate. Each one unlocks more
+        of the facility. Pick a level below to get it on Roblox.
+      </p>
+      <a href="#levels" class="btn btn-amber">View Clearance Levels</a>
+      <p class="hero-note">Requires a Roblox account age of 16+.</p>
     </div>
+  </section>
 
-    <div class="mode-row">
-      <label class="mode-option">
-        <input type="radio" name="scanMode" value="keyword" checked>
-        <span>By keyword</span>
-      </label>
-      <label class="mode-option">
-        <input type="radio" name="scanMode" value="id">
-        <span>All groups (by ID)</span>
-      </label>
-    </div>
+  <section class="levels" id="levels">
+    <div class="wrap">
+      <p class="eyebrow">03 LEVELS ON FILE</p>
+      <h2 class="section-title">Select Your Clearance</h2>
 
-    <div class="control-row" id="keywordModeRow">
-      <input type="text" id="keywordInput" placeholder="e.g. trade, clan, army, shop, art" autocomplete="off">
-      <button id="btnScan" class="btn-primary">Start scan</button>
-      <button id="btnStop" class="btn-ghost" disabled>Stop</button>
-    </div>
-    <p class="hint" id="keywordHint">Tip: short, common words surface more groups. Separate multiple keywords with commas to queue them.</p>
+      <div class="level-grid">
 
-    <div class="control-row" id="idModeRow" style="display:none;">
-      <button id="btnScanId" class="btn-primary">Start scan</button>
-      <button id="btnStopId" class="btn-ghost" disabled>Stop</button>
-    </div>
-    <p class="hint" id="idHint" style="display:none;">Checks every group starting from ID 1, one at a time, forever — no name filter, no input needed. Just hit start.</p>
+        <article class="level-card level-i">
+          <div class="level-badge">
+            <span class="level-num">I</span>
+          </div>
+          <h3 class="level-name">Standard Clearance</h3>
+          <p class="level-desc">Basic facility access. Recommended for first-time visitors.</p>
+          <ul class="level-perks">
+            <li>5x Free Revives</li>
+            <li>Exclusive In-Game Badge</li>
+            <li>1,000 Bonus Coins</li>
+          </ul>
+          <div class="level-price">
+            <span class="price-amount">135</span>
+            <span class="price-unit">R$</span>
+          </div>
+          <a href="https://www.roblox.com/game-pass/1939172354" target="_blank" rel="noopener" class="btn btn-outline">
+            Request Clearance
+          </a>
+        </article>
 
-    <div class="progress-wrap" id="progressWrap" style="display:none;">
-      <div class="progress-meta">
-        <span id="progressLabel">page 1</span>
-        <span id="progressPct">0%</span>
+        <article class="level-card level-ii">
+          <div class="level-badge">
+            <span class="level-num">II</span>
+          </div>
+          <h3 class="level-name">Advanced Clearance</h3>
+          <p class="level-desc">Extended access for those who need to see more of Medwood.</p>
+          <ul class="level-perks">
+            <li>10x Free Revives</li>
+            <li>Exclusive In-Game Badge</li>
+            <li>Access to Exclusive Discord Channels</li>
+            <li>2,500 Bonus Coins</li>
+          </ul>
+          <div class="level-price">
+            <span class="price-amount">240</span>
+            <span class="price-unit">R$</span>
+          </div>
+          <a href="https://www.roblox.com/game-pass/1936496942" target="_blank" rel="noopener" class="btn btn-outline">
+            Request Clearance
+          </a>
+        </article>
+
+        <article class="level-card level-iii">
+          <div class="level-badge">
+            <span class="level-num">III</span>
+          </div>
+          <h3 class="level-name">Ultimate Clearance</h3>
+          <p class="level-desc">Full facility access, every wing included.</p>
+          <ul class="level-perks">
+            <li>20x Free Revives</li>
+            <li>Exclusive In-Game Badge</li>
+            <li>Access to VIP Discord Channels</li>
+            <li>4,200 Bonus Coins</li>
+            <li class="perk-struck"><s>Early Access (5 tries)</s></li>
+          </ul>
+          <div class="level-price">
+            <span class="price-amount">400</span>
+            <span class="price-unit">R$</span>
+          </div>
+          <a href="https://www.roblox.com/game-pass/1935076317" target="_blank" rel="noopener" class="btn btn-amber">
+            Request Clearance
+          </a>
+        </article>
+
       </div>
-      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-    </div>
-
-    <div class="log" id="scanLog">
-      <div class="log-empty">No scan running. Pick a mode above and hit start.</div>
     </div>
   </section>
 
-  <section class="panel" id="panel-results">
-    <div class="panel-head">
-      <span class="panel-index">02</span>
-      <h2>Claimable groups</h2>
-      <p>Groups flagged with no owner. Verify each one on Roblox directly before attempting to claim — eligibility rules (Robux cost, group state) are set by Roblox and can change.</p>
-    </div>
-    <div class="results-table" id="resultsTable">
-      <div class="results-empty">Nothing found yet — results will appear here as the sweep runs.</div>
-    </div>
-  </section>
+  <section class="faq" id="faq">
+    <div class="wrap">
+      <p class="eyebrow">BEFORE YOU PROCEED</p>
+      <h2 class="section-title">Facility Notices</h2>
 
-  <section class="panel" id="panel-manual">
-    <div class="panel-head">
-      <span class="panel-index">03</span>
-      <h2>Check a specific group</h2>
-      <p>Already have a group ID in mind? Look it up directly instead of sweeping.</p>
+      <div class="faq-grid">
+        <div class="faq-item">
+          <h3>How does a purchase work?</h3>
+          <p>Each "Request Clearance" button takes you to the official Roblox Game Pass page for
+          that level. All payment is handled by Roblox using Robux — nothing is processed on this
+          site.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Do I need Robux?</h3>
+          <p>Yes. Clearance levels are purchased entirely with Robux through Roblox's own
+          platform, the same as any other Game Pass.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Refunds</h3>
+          <p>Refunds follow Roblox's standard Game Pass policies, since all transactions take
+          place on Roblox — not through MRF directly.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Is this official?</h3>
+          <p>This is the official storefront for Medwood Research Facility on Roblox. MRF is not
+          affiliated with, endorsed by, or sponsored by Roblox Corporation.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Age requirement</h3>
+          <p>You need a Roblox account with an account age of 16 or older to buy a clearance
+          level. Roblox enforces this, not MRF.</p>
+        </div>
+      </div>
     </div>
-    <div class="control-row">
-      <input type="text" id="groupIdInput" placeholder="Group ID, e.g. 3120787" inputmode="numeric">
-      <button id="btnCheck" class="btn-primary">Check group</button>
-    </div>
-    <div class="manual-result" id="manualResult"></div>
-  </section>
-
-  <section class="panel" id="panel-proxy">
-    <div class="panel-head">
-      <span class="panel-index">04</span>
-      <h2>Connection settings</h2>
-      <p>Roblox's API is usually locked to requests from roblox.com itself. If sweeps fail with a network error, paste a CORS proxy URL prefix below (see the README for options) and Derelict will route requests through it.</p>
-    </div>
-    <div class="control-row">
-      <input type="text" id="proxyInput" placeholder="optional — e.g. https://corsproxy.io/?url=">
-      <button id="btnSaveProxy" class="btn-ghost">Save</button>
-    </div>
-    <p class="hint" id="proxyStatus">No proxy set — requesting Roblox directly.</p>
   </section>
 
 </main>
 
-<footer>
-  <p>Derelict reads public Roblox group data only. It doesn't bypass logins, forge requests, or touch anything you don't already have legitimate access to. Claiming a group still happens on roblox.com, under Roblox's own rules.</p>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="assets/Screenshot_2026-06-11_193410.png" alt="" class="footer-mark" aria-hidden="true">
+      <span>MEDWOOD RESEARCH FACILITY</span>
+    </div>
+    <p class="footer-legal">
+      MRF is a Roblox experience. Not affiliated with, endorsed by, or sponsored by Roblox
+      Corporation. All purchases are processed by Roblox and billed in Robux. Buyer must have a
+      Roblox account age of 16+.
+    </p>
+  </div>
 </footer>
 
-<script src="script.js?v=4"></script>
+<script src="script.js"></script>
 </body>
 </html>
