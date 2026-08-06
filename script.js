@@ -5,7 +5,6 @@ const els = {
   keyword: document.getElementById('keywordInput'),
   btnScan: document.getElementById('btnScan'),
   btnStop: document.getElementById('btnStop'),
-  startId: document.getElementById('startIdInput'),
   btnScanId: document.getElementById('btnScanId'),
   btnStopId: document.getElementById('btnStopId'),
   keywordModeRow: document.getElementById('keywordModeRow'),
@@ -248,9 +247,7 @@ els.btnScan.addEventListener('click', () => {
 });
 
 els.btnScanId.addEventListener('click', () => {
-  const raw = els.startId.value.trim();
-  const startId = /^\d+$/.test(raw) ? parseInt(raw, 10) : 1;
-  runIdScan(startId);
+  runIdScan(1);
 });
 
 els.btnStopId.addEventListener('click', () => {

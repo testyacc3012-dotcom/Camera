@@ -72,11 +72,10 @@
     <p class="hint" id="keywordHint">Tip: short, common words surface more groups. Separate multiple keywords with commas to queue them.</p>
 
     <div class="control-row" id="idModeRow" style="display:none;">
-      <input type="text" id="startIdInput" placeholder="Starting group ID (leave blank to start at 1)" inputmode="numeric">
       <button id="btnScanId" class="btn-primary">Start scan</button>
       <button id="btnStopId" class="btn-ghost" disabled>Stop</button>
     </div>
-    <p class="hint" id="idHint" style="display:none;">Checks every group ID in order, one at a time, forever. Covers everything — not just groups with matching names — but it's slower since there's no keyword to narrow it down. Group IDs currently go up to roughly 12 million; pick a starting point anywhere in that range if you want to skip ahead.</p>
+    <p class="hint" id="idHint" style="display:none;">Checks every group starting from ID 1, one at a time, forever — no name filter, no input needed. Just hit start.</p>
 
     <div class="progress-wrap" id="progressWrap" style="display:none;">
       <div class="progress-meta">
