@@ -50,15 +50,33 @@
     <div class="panel-head">
       <span class="panel-index">01</span>
       <h2>Continuous scan</h2>
-      <p>Runs indefinitely — pages through every result for your keyword(s), verifies each one against its detail page, then loops back and does it again. Keep it running in the background; stop it whenever you want.</p>
+      <p>Runs indefinitely until you stop it. Two modes: search by keyword, or walk every group ID directly — the second one doesn't care what a group is named, it just checks all of them.</p>
     </div>
 
-    <div class="control-row">
+    <div class="mode-row">
+      <label class="mode-option">
+        <input type="radio" name="scanMode" value="keyword" checked>
+        <span>By keyword</span>
+      </label>
+      <label class="mode-option">
+        <input type="radio" name="scanMode" value="id">
+        <span>All groups (by ID)</span>
+      </label>
+    </div>
+
+    <div class="control-row" id="keywordModeRow">
       <input type="text" id="keywordInput" placeholder="e.g. trade, clan, army, shop, art" autocomplete="off">
       <button id="btnScan" class="btn-primary">Start scan</button>
       <button id="btnStop" class="btn-ghost" disabled>Stop</button>
     </div>
-    <p class="hint">Tip: short, common words surface more groups. Separate multiple keywords with commas to queue them.</p>
+    <p class="hint" id="keywordHint">Tip: short, common words surface more groups. Separate multiple keywords with commas to queue them.</p>
+
+    <div class="control-row" id="idModeRow" style="display:none;">
+      <input type="text" id="startIdInput" placeholder="Starting group ID (leave blank to start at 1)" inputmode="numeric">
+      <button id="btnScanId" class="btn-primary">Start scan</button>
+      <button id="btnStopId" class="btn-ghost" disabled>Stop</button>
+    </div>
+    <p class="hint" id="idHint" style="display:none;">Checks every group ID in order, one at a time, forever. Covers everything — not just groups with matching names — but it's slower since there's no keyword to narrow it down. Group IDs currently go up to roughly 12 million; pick a starting point anywhere in that range if you want to skip ahead.</p>
 
     <div class="progress-wrap" id="progressWrap" style="display:none;">
       <div class="progress-meta">
@@ -69,7 +87,7 @@
     </div>
 
     <div class="log" id="scanLog">
-      <div class="log-empty">No scan running. Enter a keyword above and hit start.</div>
+      <div class="log-empty">No scan running. Pick a mode above and hit start.</div>
     </div>
   </section>
 

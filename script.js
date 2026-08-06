@@ -5,6 +5,13 @@ const els = {
   keyword: document.getElementById('keywordInput'),
   btnScan: document.getElementById('btnScan'),
   btnStop: document.getElementById('btnStop'),
+  startId: document.getElementById('startIdInput'),
+  btnScanId: document.getElementById('btnScanId'),
+  btnStopId: document.getElementById('btnStopId'),
+  keywordModeRow: document.getElementById('keywordModeRow'),
+  idModeRow: document.getElementById('idModeRow'),
+  keywordHint: document.getElementById('keywordHint'),
+  idHint: document.getElementById('idHint'),
   log: document.getElementById('scanLog'),
   results: document.getElementById('resultsTable'),
   statScanned: document.getElementById('statScanned'),
@@ -221,12 +228,94 @@ async function runContinuousScan(keywords) {
   logLine('<span class="tag-warn">scan stopped</span>');
 }
 
+// ---------- Mode toggle ----------
+
+document.querySelectorAll('input[name="scanMode"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    const isId = document.querySelector('input[name="scanMode"]:checked').value === 'id';
+    els.keywordModeRow.style.display = isId ? 'none' : 'flex';
+    els.idModeRow.style.display = isId ? 'flex' : 'none';
+    els.keywordHint.style.display = isId ? 'none' : 'block';
+    els.idHint.style.display = isId ? 'block' : 'none';
+  });
+});
+
 els.btnScan.addEventListener('click', () => {
   const raw = els.keyword.value.trim();
   if (!raw) return;
   const keywords = raw.split(',').map(k => k.trim()).filter(Boolean);
   runContinuousScan(keywords);
 });
+
+els.btnScanId.addEventListener('click', () => {
+  const raw = els.startId.value.trim();
+  const startId = /^\d+$/.test(raw) ? parseInt(raw, 10) : 1;
+  runIdScan(startId);
+});
+
+els.btnStopId.addEventListener('click', () => {
+  state.stopRequested = true;
+});
+
+// Runs forever, checking every group ID in sequence starting from startId,
+// with no keyword filter at all - covers groups that would never surface
+// in a name-based search. Same throttle/log/progress/detection behavior as
+// the keyword mode.
+async function runIdScan(startId) {
+  state.scanning = true;
+  state.stopRequested = false;
+  state.cycle = 0;
+  els.btnScanId.disabled = true;
+  els.btnStopId.disabled = false;
+  updateStats();
+
+  let id = startId;
+  const CHUNK = 100; // purely for progress-bar display, not a batch fetch
+  let chunkIndex = 0;
+
+  while (!state.stopRequested) {
+    chunkIndex++;
+    for (let i = 0; i < CHUNK; i++) {
+      if (state.stopRequested) break;
+      state.scannedCount++;
+
+      const pct = Math.round(((i + 1) / CHUNK) * 100);
+      updateProgress(`ID sweep · block ${chunkIndex} · around #${id}`, pct);
+
+      let detail;
+      try {
+        detail = await getGroupDetail(id);
+      } catch (e) {
+        // Most IDs in a gap will 400/404 - that's expected, not an error to
+        // dwell on, so keep the log terse for these.
+        logLine(`#${id} — not accessible, skipping`);
+        id++;
+        await new Promise(r => setTimeout(r, CHECK_DELAY_MS));
+        continue;
+      }
+
+      logLine(`checking <span class="tag">#${id}</span> "${escapeHtml(detail.name || '(unnamed)')}"…`);
+
+      if (detail.owner === null && !state.foundIds.has(id)) {
+        state.foundIds.add(id);
+        addResultRow(detail);
+        updateStats();
+        logLine(`⚠ OWNERLESS: "${escapeHtml(detail.name)}" — #${id} — ${detail.memberCount} members`, true);
+        alert(`Ownerless group found!\n\n${detail.name}\nID: ${id}\nMembers: ${detail.memberCount}\n\nScan will resume once you close this.`);
+      }
+
+      updateStats();
+      id++;
+      await new Promise(r => setTimeout(r, CHECK_DELAY_MS));
+    }
+  }
+
+  state.scanning = false;
+  els.btnScanId.disabled = false;
+  els.btnStopId.disabled = true;
+  updateStats();
+  logLine('<span class="tag-warn">scan stopped</span>');
+}
 
 els.btnStop.addEventListener('click', () => {
   state.stopRequested = true;
